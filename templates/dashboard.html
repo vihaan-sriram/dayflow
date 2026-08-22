@@ -3,61 +3,573 @@
 {% block title %}Dashboard - Dayflow HRMS{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
+<div class="max-w-7xl mx-auto space-y-8" x-data="dashboardController()">
     <!-- Verification Alert Banner -->
     {% if not current_user.is_verified %}
-    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded shadow-sm flex justify-between items-center">
+    <div class="bg-amber-50 border border-amber-200 p-4 rounded-none shadow-sm flex justify-between items-center animate-fade">
         <div class="flex items-center">
-            <span class="text-2xl mr-3">✉️</span>
+            <span class="text-xl mr-3">✉️</span>
             <div>
-                <p class="text-sm font-semibold text-yellow-800">Email Verification Required</p>
-                <p class="text-xs text-yellow-700">Please verify your email address to unlock full features.</p>
+                <p class="text-sm font-semibold text-amber-800">Email Verification Required</p>
+                <p class="text-xs text-amber-700">Please verify your email address to unlock all payroll and leave workflows.</p>
             </div>
         </div>
         <div>
             <form action="{{ url_for('simulate_verification') }}" method="POST">
-                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-yellow-500 text-xs font-semibold rounded text-yellow-800 bg-white hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
-                    Simulate Verification Link
+                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-amber-300 text-xs font-semibold rounded-none bg-white text-amber-800 hover:bg-amber-100 transition-colors">
+                    Simulate Verification
                 </button>
             </form>
         </div>
     </div>
     {% endif %}
 
-    <!-- Welcome Card -->
-    <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200 mb-8">
-        <div class="px-4 py-5 sm:px-6 bg-indigo-50 border-b border-gray-200">
-            <h3 class="text-lg leading-6 font-bold text-gray-900">
-                Welcome to Dayflow, {{ current_user.role }}!
-            </h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                You are successfully logged in.
-            </p>
+    <!-- Welcome Section (Flat Slate Theme) -->
+    <div class="card-el bg-white border border-slate-200 p-6 flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 rounded-none shadow-sm">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight uppercase">Workspace Summary</h1>
+            <p class="text-xs text-slate-500 mt-1">Hello, {{ current_user.full_name or 'User' }}. Keeping your workday aligned.</p>
         </div>
-        <div class="px-4 py-5 sm:p-6 space-y-4">
-            <div>
-                <h4 class="text-sm font-medium text-gray-500">Employee ID</h4>
-                <p class="mt-1 text-sm font-semibold text-gray-900">{{ current_user.employee_id }}</p>
+        <div class="flex space-x-2">
+            <span class="inline-flex items-center px-3 py-1 text-[10px] font-bold bg-slate-900 text-white uppercase tracking-wider">
+                {{ current_user.role }}
+            </span>
+            <span class="inline-flex items-center px-3 py-1 text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wider">
+                ID: {{ current_user.employee_id }}
+            </span>
+        </div>
+    </div>
+
+    {% if current_user.role == 'HR' %}
+    <!-- ==================== HR / ADMIN DASHBOARD ==================== -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Stat Cards -->
+        <div class="card-el bg-white border border-slate-200 p-6 rounded-none shadow-sm">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Employees</span>
+                <span class="text-base text-slate-400">👥</span>
             </div>
-            <div>
-                <h4 class="text-sm font-medium text-gray-500">Email Address</h4>
-                <p class="mt-1 text-sm font-semibold text-gray-900">{{ current_user.email }}</p>
+            <div class="mt-2 text-2xl font-black text-slate-900 tracking-tight">{{ employees|length }}</div>
+            <p class="mt-1 text-[10px] text-slate-400">Profiles in roster</p>
+        </div>
+        <div class="card-el bg-white border border-slate-200 p-6 rounded-none shadow-sm">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Presence Today</span>
+                <span class="text-base text-slate-400">⏱️</span>
             </div>
-            <div>
-                <h4 class="text-sm font-medium text-gray-500">Verification Status</h4>
-                <p class="mt-1 text-sm">
-                    {% if current_user.is_verified %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        ✓ Verified
-                    </span>
+            <div class="mt-2 text-2xl font-black text-slate-900 tracking-tight">
+                {{ attendance_logs|selectattr('date', 'equalto', date_today)|list|length }}
+            </div>
+            <p class="mt-1 text-[10px] text-slate-400">Checked-in personnel</p>
+        </div>
+        <div class="card-el bg-white border border-slate-200 p-6 rounded-none shadow-sm">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Leaves Queue</span>
+                <span class="text-base text-slate-400">⏳</span>
+            </div>
+            <div class="mt-2 text-2xl font-black {% if pending_leaves|length > 0 %}text-amber-600{% else %}text-slate-950{% endif %} tracking-tight">{{ pending_leaves|length }}</div>
+            <p class="mt-1 text-[10px] text-slate-400">Awaiting approval</p>
+        </div>
+    </div>
+
+    <!-- HR Management Hub -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar Navigation Tabs -->
+        <div class="card-el lg:col-span-1 bg-slate-900 text-slate-300 p-4 rounded-none shadow-sm h-fit space-y-1">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-3">Management Console</h3>
+            <button @click="setTab('employees')" :class="tab === 'employees' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-800 hover:text-white'" class="w-full text-left px-4 py-2.5 rounded-none text-xs uppercase tracking-wider transition-all flex items-center">
+                <span class="mr-2.5">👥</span> Employee Roster
+            </button>
+            <button @click="setTab('attendance')" :class="tab === 'attendance' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-800 hover:text-white'" class="w-full text-left px-4 py-2.5 rounded-none text-xs uppercase tracking-wider transition-all flex items-center">
+                <span class="mr-2.5">📅</span> Attendance Log
+            </button>
+            <button @click="setTab('leaves')" :class="tab === 'leaves' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-800 hover:text-white'" class="w-full text-left px-4 py-2.5 rounded-none text-xs uppercase tracking-wider transition-all flex items-center">
+                <span class="mr-2.5">⏳</span> Leave Queue
+                {% if pending_leaves|length > 0 %}
+                <span class="ml-auto bg-amber-500 text-slate-950 text-[10px] px-2 py-0.5 font-bold">{{ pending_leaves|length }}</span>
+                {% endif %}
+            </button>
+        </div>
+
+        <!-- Tab Details -->
+        <div class="lg:col-span-3 space-y-6">
+            
+            <!-- Employee Roster -->
+            <div x-show="tab === 'employees'" class="card-el bg-white border border-slate-200 shadow-sm overflow-hidden rounded-none animate-fade">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Employee Roster</h2>
+                    <a href="{{ url_for('signup') }}" class="inline-flex items-center px-3 py-1.5 border border-slate-900 text-[10px] font-bold uppercase rounded-none bg-slate-900 text-white hover:bg-slate-800 transition-colors">
+                        + Register User
+                    </a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Department</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            {% for emp in employees %}
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">{{ emp.employee_id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-8 w-8 rounded-none bg-slate-100 flex items-center justify-center text-slate-700 font-bold mr-3 text-xs border border-slate-200">
+                                            {{ emp.full_name[0] if emp.full_name else 'E' }}
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-semibold text-slate-950">{{ emp.full_name }}</div>
+                                            <div class="text-xs text-slate-400">{{ emp.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-600 font-medium">{{ emp.department or 'Unassigned' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-600 font-medium">{{ emp.job_title or 'Employee' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                    <a href="{{ url_for('admin_view_profile', user_id=emp.id) }}" class="text-blue-600 hover:underline font-semibold">Edit Profile</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Attendance Logs -->
+            <div x-show="tab === 'attendance'" class="card-el bg-white border border-slate-200 shadow-sm overflow-hidden rounded-none animate-fade" x-cloak>
+                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                    <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Attendance Logs</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Employee</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Check In</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Check Out</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            {% for log in attendance_logs %}
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-semibold">{{ log.date.strftime('%d %b, %Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-950 font-medium">{{ log.user.full_name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">{{ log.check_in.strftime('%I:%M %p') if log.check_in else '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">{{ log.check_out.strftime('%I:%M %p') if log.check_out else '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase border 
+                                        {% if log.status == 'Present' %}bg-green-50 text-green-700 border-green-200
+                                        {% elif log.status == 'Half-day' %}bg-amber-50 text-amber-700 border-amber-200
+                                        {% elif log.status == 'Leave' %}bg-blue-50 text-blue-700 border-blue-200
+                                        {% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+                                        {{ log.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Leave Queue -->
+            <div x-show="tab === 'leaves'" class="card-el bg-white border border-slate-200 shadow-sm overflow-hidden rounded-none animate-fade" x-cloak>
+                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                    <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Leave Applications</h2>
+                </div>
+                {% if pending_leaves|length == 0 %}
+                <div class="p-8 text-center text-slate-400">
+                    <span class="text-3xl block mb-2">🎉</span>
+                    No pending leave applications. All clear!
+                </div>
+                {% else %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Employee</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Details</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Remarks</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            {% for leave in pending_leaves %}
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold text-slate-950">{{ leave.user.full_name }}</div>
+                                    <div class="text-xs text-slate-400">ID: {{ leave.user.employee_id }} • {{ leave.user.department }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                    <div class="font-bold text-slate-700 uppercase">{{ leave.leave_type }} Leave</div>
+                                    <div class="text-slate-500 mt-0.5">{{ leave.start_date.strftime('%d %b') }} to {{ leave.end_date.strftime('%d %b, %Y') }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-xs text-slate-600 max-w-xs truncate">{{ leave.remarks or '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                    <form action="{{ url_for('leave_action', leave_id=leave.id) }}" method="POST" class="flex items-center space-x-2">
+                                        <input type="text" name="admin_comments" placeholder="Comments..." class="px-2 py-1 border border-slate-300 rounded-none text-xs focus:ring-slate-950 focus:border-slate-950">
+                                        <button type="submit" name="action" value="approve" class="px-2.5 py-1 bg-green-600 text-white hover:bg-green-700 font-bold uppercase transition-colors">
+                                            Approve
+                                        </button>
+                                        <button type="submit" name="action" value="reject" class="px-2.5 py-1 bg-red-600 text-white hover:bg-red-700 font-bold uppercase transition-colors">
+                                            Reject
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    {% else %}
+    <!-- ==================== EMPLOYEE DASHBOARD (Working Tabs) ==================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar Navigation Tabs -->
+        <div class="card-el lg:col-span-1 bg-slate-900 text-slate-300 p-4 rounded-none shadow-sm h-fit space-y-1">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-3">My Workspace</h3>
+            <button @click="setTab('overview')" :class="tab === 'overview' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-800 hover:text-white'" class="w-full text-left px-4 py-2.5 rounded-none text-xs uppercase tracking-wider transition-all flex items-center">
+                <span class="mr-2.5">🏠</span> Overview
+            </button>
+            <button @click="setTab('attendance')" :class="tab === 'attendance' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-800 hover:text-white'" class="w-full text-left px-4 py-2.5 rounded-none text-xs uppercase tracking-wider transition-all flex items-center">
+                <span class="mr-2.5">📅</span> My Attendance
+            </button>
+            <button @click="setTab('leaves')" :class="tab === 'leaves' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-800 hover:text-white'" class="w-full text-left px-4 py-2.5 rounded-none text-xs uppercase tracking-wider transition-all flex items-center">
+                <span class="mr-2.5">🌴</span> Leave Requests
+            </button>
+        </div>
+
+        <!-- Employee Content Area -->
+        <div class="lg:col-span-3 space-y-6">
+            
+            <!-- OVERVIEW TAB -->
+            <div x-show="tab === 'overview'" class="space-y-6 animate-fade">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Profile Card -->
+                    <div class="bg-white border border-slate-200 shadow-sm p-6 flex flex-col justify-between rounded-none">
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="h-12 w-12 rounded-none border border-slate-200 bg-slate-100 flex items-center justify-center text-slate-800 text-lg font-bold">
+                                    {{ current_user.full_name[0] if current_user.full_name else 'E' }}
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-bold text-slate-900 tracking-tight">{{ current_user.full_name or 'Employee' }}</h3>
+                                    <p class="text-xs text-slate-500">{{ current_user.job_title or 'Job Title' }} • {{ current_user.department or 'Department' }}</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-100 pt-3 text-xs text-slate-600 space-y-1.5">
+                                <p class="flex items-center"><span class="text-slate-400 mr-2">📞</span> {{ current_user.phone or 'Not set' }}</p>
+                                <p class="flex items-center"><span class="text-slate-400 mr-2">📍</span> {{ current_user.address or 'Not set' }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100">
+                            <a href="{{ url_for('profile') }}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-slate-300 text-xs font-bold rounded-none text-slate-700 bg-white hover:bg-slate-50 transition-colors uppercase tracking-wider">
+                                Edit Profile Info
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Card -->
+                    <div class="bg-white border border-slate-200 shadow-sm p-6 flex flex-col justify-between rounded-none">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Presence Status</h3>
+                                <span class="text-sm">⏱️</span>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 p-4 text-center">
+                                {% if today_record %}
+                                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Today's Check-in</p>
+                                    <p class="text-sm font-bold text-green-700 mt-1">✓ Active (Checked In)</p>
+                                    <p class="text-[10px] text-slate-600 mt-1">Time: {{ today_record.check_in.strftime('%I:%M %p') }}</p>
+                                    {% if today_record.check_out %}
+                                        <p class="text-[10px] text-slate-600 mt-0.5">Check-out: {{ today_record.check_out.strftime('%I:%M %p') }}</p>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Today's Check-in</p>
+                                    <p class="text-sm font-bold text-slate-400 mt-1">Not Active</p>
+                                    <p class="text-[10px] text-slate-500 mt-1">Ready for your shift?</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+                            <form action="{{ url_for('check_in') }}" method="POST" class="w-full">
+                                <button type="submit" {% if today_record %}disabled{% endif %} class="w-full inline-flex justify-center items-center px-3 py-2 border border-slate-900 text-xs font-bold rounded-none text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider transition-colors">
+                                    Check In
+                                </button>
+                            </form>
+                            <form action="{{ url_for('check_out') }}" method="POST" class="w-full">
+                                <button type="submit" {% if not today_record or today_record.check_out %}disabled{% endif %} class="w-full inline-flex justify-center items-center px-3 py-2 border border-slate-300 text-xs font-bold rounded-none text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider transition-colors">
+                                    Check Out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Leave Balance Card -->
+                    <div class="bg-white border border-slate-200 shadow-sm p-6 flex flex-col justify-between rounded-none">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Time-Off Balance</h3>
+                                <span class="text-sm">🌴</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-center">
+                                <div class="bg-slate-50 border border-slate-200 p-2">
+                                    <p class="text-xl font-bold text-slate-900">{{ leave_days_taken }}</p>
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Days Used</p>
+                                </div>
+                                <div class="bg-slate-50 border border-slate-200 p-2">
+                                    <p class="text-xl font-bold text-green-700">{{ 15 - leave_days_taken }}</p>
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Remaining</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100">
+                            <button @click="openLeaveModal()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-slate-950 text-xs font-bold rounded-none text-white bg-slate-950 hover:bg-slate-800 transition-colors uppercase tracking-wider">
+                                Apply for Time-Off
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities (Overview) -->
+                <div class="bg-white border border-slate-200 shadow-sm p-6 rounded-none">
+                    <h2 class="text-xs font-bold text-slate-900 mb-4 uppercase tracking-wider border-b border-slate-100 pb-2">
+                        🔔 Recent Activity Logs
+                    </h2>
+                    {% if not activities %}
+                    <p class="text-xs text-slate-400 text-center py-4">No recent updates.</p>
                     {% else %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        ⚠ Pending Verification
-                    </span>
+                    <ul class="space-y-2">
+                        {% for act in activities %}
+                        <li class="text-xs text-slate-700 bg-slate-50 border border-slate-200 p-3 flex items-start">
+                            <span class="mr-2 text-slate-400">⚡</span>
+                            <span class="font-medium">{{ act }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
                     {% endif %}
-                </p>
+                </div>
             </div>
+
+            <!-- MY ATTENDANCE TAB -->
+            <div x-show="tab === 'attendance'" class="space-y-6 animate-fade" x-cloak>
+                <div class="bg-white border border-slate-200 shadow-sm p-6 rounded-none flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-950 uppercase tracking-wider">Attendance Desk</h2>
+                        <p class="text-xs text-slate-500 mt-1">Manage check-in timestamps and view complete tracking logs.</p>
+                    </div>
+                    <div class="flex items-center space-x-2 w-full md:w-auto">
+                        <form action="{{ url_for('check_in') }}" method="POST" class="w-1/2 md:w-auto">
+                            <button type="submit" {% if today_record %}disabled{% endif %} class="w-full inline-flex justify-center items-center px-3 py-2 border border-slate-900 text-xs font-bold rounded-none text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider transition-colors">
+                                Check In
+                            </button>
+                        </form>
+                        <form action="{{ url_for('check_out') }}" method="POST" class="w-1/2 md:w-auto">
+                            <button type="submit" {% if not today_record or today_record.check_out %}disabled{% endif %} class="w-full inline-flex justify-center items-center px-3 py-2 border border-slate-300 text-xs font-bold rounded-none text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider transition-colors">
+                                Check Out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 shadow-sm overflow-hidden rounded-none">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Presence History</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Check In</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Check Out</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                {% for log in my_attendance %}
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-semibold">{{ log.date.strftime('%d %b, %Y') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">{{ log.check_in.strftime('%I:%M %p') if log.check_in else '-' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">{{ log.check_out.strftime('%I:%M %p') if log.check_out else '-' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase border
+                                            {% if log.status == 'Present' %}bg-green-50 text-green-700 border-green-200
+                                            {% elif log.status == 'Half-day' %}bg-amber-50 text-amber-700 border-amber-200
+                                            {% elif log.status == 'Leave' %}bg-blue-50 text-blue-700 border-blue-200
+                                            {% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+                                            {{ log.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEAVE REQUESTS TAB -->
+            <div x-show="tab === 'leaves'" class="space-y-6 animate-fade" x-cloak>
+                <div class="bg-white border border-slate-200 shadow-sm p-6 rounded-none flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-950 uppercase tracking-wider">Time-Off Requests</h2>
+                        <p class="text-xs text-slate-500 mt-1">Submit new leave applications and monitor pending supervisor feedback.</p>
+                    </div>
+                    <button @click="openLeaveModal()" class="inline-flex justify-center items-center px-4 py-2 border border-slate-950 text-xs font-bold rounded-none text-white bg-slate-950 hover:bg-slate-800 transition-colors uppercase tracking-wider w-full md:w-auto">
+                        Apply for Time-Off
+                    </button>
+                </div>
+
+                <div class="bg-white border border-slate-200 shadow-sm overflow-hidden rounded-none">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Leave Applications History</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dates</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Reason</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Supervisor Comment</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                {% for leave in my_leaves %}
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 uppercase tracking-wider">{{ leave.leave_type }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-600 font-medium">
+                                        {{ leave.start_date.strftime('%d %b') }} to {{ leave.end_date.strftime('%d %b, %Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">{{ leave.remarks or '-' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase border
+                                            {% if leave.status == 'Approved' %}bg-green-50 text-green-700 border-green-200
+                                            {% elif leave.status == 'Pending' %}bg-amber-50 text-amber-700 border-amber-200
+                                            {% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+                                            {{ leave.status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">{{ leave.admin_comments or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ==================== LEAVE REQUEST FORM MODAL (Anime.js animated) ==================== -->
+    <div x-show="showLeaveModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak>
+        <div id="leaveModal" class="bg-white border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 rounded-none">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-xs font-bold text-slate-950 uppercase tracking-wider">Apply for Time-Off</h3>
+                <button @click="closeLeaveModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+            
+            <form action="{{ url_for('apply_leave') }}" method="POST" class="space-y-4">
+                <div>
+                    <label for="leave_type" class="block text-[10px] font-semibold text-slate-500 uppercase">Leave Category</label>
+                    <select id="leave_type" name="leave_type" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm bg-white">
+                        <option value="Paid">Paid Leave</option>
+                        <option value="Sick">Sick Leave</option>
+                        <option value="Unpaid">Unpaid Leave</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="start_date" class="block text-[10px] font-semibold text-slate-500 uppercase">Start Date</label>
+                        <input type="date" id="start_date" name="start_date" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-[10px] font-semibold text-slate-500 uppercase">End Date</label>
+                        <input type="date" id="end_date" name="end_date" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label for="remarks" class="block text-[10px] font-semibold text-slate-500 uppercase">Reason / Remarks</label>
+                    <textarea id="remarks" name="remarks" rows="3" placeholder="Brief explanation for time-off..." class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm"></textarea>
+                </div>
+                
+                <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+                    <button type="button" @click="closeLeaveModal()" class="px-4 py-2 border border-slate-300 text-xs font-bold rounded-none text-slate-700 bg-white hover:bg-slate-50 uppercase tracking-wider">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-slate-900 text-xs font-bold rounded-none text-white bg-slate-900 hover:bg-slate-800 uppercase tracking-wider">
+                        Submit Application
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<script>
+function dashboardController() {
+    return {
+        showLeaveModal: false,
+        tab: new URLSearchParams(window.location.search).get('tab') || '{% if current_user.role == "HR" %}employees{% else %}overview{% endif %}',
+        init() {
+            // Anime.js load slide-up animation
+            anime({
+                targets: '.card-el',
+                translateY: [15, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(50),
+                duration: 400,
+                easing: 'easeOutQuad'
+            });
+        },
+        setTab(t) {
+            this.tab = t;
+            // Update URL query string without reloading page
+            const url = new URL(window.location);
+            url.searchParams.set('tab', t);
+            window.history.pushState({}, '', url);
+        },
+        openLeaveModal() {
+            this.showLeaveModal = true;
+            this.$nextTick(() => {
+                anime({
+                    targets: '#leaveModal',
+                    scale: [0.95, 1],
+                    opacity: [0, 1],
+                    duration: 200,
+                    easing: 'easeOutQuad'
+                });
+            });
+        },
+        closeLeaveModal() {
+            anime({
+                targets: '#leaveModal',
+                scale: [1, 0.95],
+                opacity: [1, 0],
+                duration: 150,
+                easing: 'easeInQuad',
+                complete: () => {
+                    this.showLeaveModal = false;
+                }
+            });
+        }
+    }
+}
+</script>
 {% endblock %}

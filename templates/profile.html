@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Dayflow HRMS{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Back Navigation -->
+    <div class="flex items-center justify-between">
+        <a href="{{ url_for('dashboard') }}" class="inline-flex items-center px-4 py-2 border border-slate-300 text-xs font-bold uppercase rounded-none text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+            ← Back to Dashboard
+        </a>
+        <h1 class="text-base font-extrabold text-slate-950 uppercase tracking-wider">
+            {% if current_user.id == profile_user.id %}
+                My Profile Details
+            {% else %}
+                Employee File: {{ profile_user.full_name }}
+            {% endif %}
+        </h1>
+    </div>
+
+    <!-- Main Profile Card -->
+    <form action="" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Profile Picture & File Upload Column -->
+        <div class="md:col-span-1 bg-white border border-slate-200 rounded-none p-6 shadow-sm flex flex-col items-center justify-center space-y-4 text-center h-fit">
+            <div class="relative group">
+                <div class="h-32 w-32 rounded-none overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
+                    {% if profile_user.profile_pic %}
+                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + profile_user.profile_pic) }}" alt="Profile Picture" class="h-full w-full object-cover">
+                    {% else %}
+                        <span class="text-4xl text-slate-400 font-bold uppercase">
+                            {{ profile_user.full_name[0] if profile_user.full_name else 'E' }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-base font-bold text-slate-950">{{ profile_user.full_name or 'Unassigned Name' }}</h3>
+                <p class="text-xs text-slate-500 font-medium">{{ profile_user.job_title or 'Employee' }}</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">ID: {{ profile_user.employee_id }}</p>
+            </div>
+
+            <!-- Profile Pic File Input -->
+            <div class="w-full pt-4 border-t border-slate-100 space-y-2">
+                <label for="profile_pic" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload Photo</label>
+                <input type="file" id="profile_pic" name="profile_pic" accept="image/*" class="block w-full text-xs text-slate-500
+                    file:mr-4 file:py-1.5 file:px-3
+                    file:rounded-none file:border file:border-slate-300
+                    file:text-xs file:font-bold file:uppercase file:tracking-wider
+                    file:bg-slate-50 file:text-slate-700
+                    hover:file:bg-slate-100 transition-colors">
+                <p class="text-[9px] text-slate-400">PNG, JPG, JPEG, GIF (Max 2MB)</p>
+            </div>
+        </div>
+
+        <!-- Details Column -->
+        <div class="md:col-span-2 space-y-6">
+            
+            <!-- Section 1: Personal Details -->
+            <div class="bg-white border border-slate-200 rounded-none p-6 shadow-sm space-y-4">
+                <h3 class="text-xs font-bold text-slate-900 border-b border-slate-100 pb-2 uppercase tracking-wider">Personal Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="full_name" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                        <input type="text" id="full_name" name="full_name" value="{{ profile_user.full_name or '' }}" 
+                            {% if current_user.role != 'HR' %}readonly class="mt-1 block w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-none sm:text-sm cursor-not-allowed focus:outline-none"
+                            {% else %}class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm focus:ring-slate-950 focus:border-slate-950"{% endif %}>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                        <input type="email" id="email" value="{{ profile_user.email }}" readonly 
+                            class="mt-1 block w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-none sm:text-sm cursor-not-allowed focus:outline-none">
+                        <p class="text-[9px] text-slate-400 mt-1">Contact HR to modify registered email.</p>
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone Number</label>
+                        <input type="text" id="phone" name="phone" value="{{ profile_user.phone or '' }}" placeholder="+91 XXXXX XXXXX"
+                            class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm focus:ring-slate-950 focus:border-slate-950">
+                    </div>
+                    <div>
+                        <label for="address" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Home Address</label>
+                        <input type="text" id="address" name="address" value="{{ profile_user.address or '' }}" placeholder="Address details..."
+                            class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm focus:ring-slate-950 focus:border-slate-950">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Job Details -->
+            <div class="bg-white border border-slate-200 rounded-none p-6 shadow-sm space-y-4">
+                <h3 class="text-xs font-bold text-slate-900 border-b border-slate-100 pb-2 uppercase tracking-wider">Job Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="employee_id" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Employee ID</label>
+                        <input type="text" id="employee_id" name="employee_id" value="{{ profile_user.employee_id }}"
+                            {% if current_user.role != 'HR' %}readonly class="mt-1 block w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-none sm:text-sm cursor-not-allowed focus:outline-none"
+                            {% else %}class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm focus:ring-slate-950 focus:border-slate-950"{% endif %}>
+                    </div>
+                    <div>
+                        <label for="department" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</label>
+                        <input type="text" id="department" name="department" value="{{ profile_user.department or '' }}"
+                            {% if current_user.role != 'HR' %}readonly class="mt-1 block w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-none sm:text-sm cursor-not-allowed focus:outline-none"
+                            {% else %}class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm focus:ring-slate-950 focus:border-slate-950"{% endif %}>
+                    </div>
+                    <div>
+                        <label for="job_title" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Job Title</label>
+                        <input type="text" id="job_title" name="job_title" value="{{ profile_user.job_title or '' }}"
+                            {% if current_user.role != 'HR' %}readonly class="mt-1 block w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-none sm:text-sm cursor-not-allowed focus:outline-none"
+                            {% else %}class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-none sm:text-sm focus:ring-slate-950 focus:border-slate-950"{% endif %}>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Salary Structure -->
+            <div class="bg-white border border-slate-200 rounded-none p-6 shadow-sm space-y-4">
+                <h3 class="text-xs font-bold text-slate-900 border-b border-slate-100 pb-2 uppercase tracking-wider">Salary Structure</h3>
+                <div>
+                    <label for="salary" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Annual Base Salary (USD)</label>
+                    <div class="mt-1 relative rounded-none shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-slate-400 sm:text-sm">$</span>
+                        </div>
+                        <input type="number" step="0.01" id="salary" name="salary" value="{{ profile_user.salary or '' }}" placeholder="0.00"
+                            {% if current_user.role != 'HR' %}readonly class="block w-full pl-7 pr-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 rounded-none sm:text-sm cursor-not-allowed focus:outline-none"
+                            {% else %}class="block w-full pl-7 pr-3 py-2 border border-slate-300 rounded-none sm:text-sm focus:ring-slate-950 focus:border-slate-950"{% endif %}>
+                    </div>
+                    {% if current_user.role != 'HR' %}
+                        <p class="text-[9px] text-slate-400 mt-1">Base Salary structure is read-only for employees.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3">
+                <a href="{{ url_for('dashboard') }}" class="px-4 py-2 border border-slate-300 text-xs font-bold rounded-none text-slate-700 bg-white hover:bg-slate-50 transition-colors uppercase tracking-wider">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 border border-transparent text-xs font-bold rounded-none text-white bg-slate-900 hover:bg-slate-800 transition-colors uppercase tracking-wider">
+                    Save Changes
+                </button>
+            </div>
+
+        </div>
+
+    </form>
+</div>
+{% endblock %}

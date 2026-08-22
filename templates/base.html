@@ -8,39 +8,41 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js for interactive elements -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Anime.js for smooth animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+<body class="bg-slate-50 text-slate-900 flex flex-col min-h-screen">
 
     <!-- Navigation Header -->
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <span class="text-2xl font-bold text-indigo-600 tracking-tight flex items-center">
-                            <span class="mr-2 text-3xl">⏱️</span> Dayflow
+                        <span class="text-xl font-extrabold text-slate-950 tracking-tight flex items-center uppercase">
+                            <span class="mr-2 text-2xl">⏱️</span> Dayflow
                         </span>
                     </div>
                     {% if current_user.is_authenticated %}
                     <div class="hidden sm:-my-px sm:ml-8 sm:flex sm:space-x-8">
-                        <a href="{{ url_for('dashboard') }}" class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="{{ url_for('dashboard') }}" class="border-slate-900 text-slate-900 inline-flex items-center px-1 pt-1 border-b-2 text-xs font-bold uppercase tracking-wider">
                             Dashboard
                         </a>
                         {% if current_user.role == 'Employee' %}
-                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="{{ url_for('dashboard') }}?tab=attendance" class="border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-900 inline-flex items-center px-1 pt-1 border-b-2 text-xs font-semibold uppercase tracking-wider transition-colors">
                             My Attendance
                         </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="{{ url_for('dashboard') }}?tab=leaves" class="border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-900 inline-flex items-center px-1 pt-1 border-b-2 text-xs font-semibold uppercase tracking-wider transition-colors">
                             Leave Requests
                         </a>
                         {% else %}
-                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="{{ url_for('dashboard') }}?tab=employees" class="border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-900 inline-flex items-center px-1 pt-1 border-b-2 text-xs font-semibold uppercase tracking-wider transition-colors">
                             Manage Employees
                         </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="{{ url_for('dashboard') }}?tab=leaves" class="border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-900 inline-flex items-center px-1 pt-1 border-b-2 text-xs font-semibold uppercase tracking-wider transition-colors">
                             Approvals
                         </a>
                         {% endif %}
@@ -50,18 +52,18 @@
                 <div class="flex items-center">
                     {% if current_user.is_authenticated %}
                     <div class="ml-3 relative flex items-center space-x-4">
-                        <div class="text-right hidden md:block">
-                            <div class="text-sm font-semibold text-gray-700">{{ current_user.full_name or current_user.email }}</div>
-                            <div class="text-xs text-gray-500">{{ current_user.role }}</div>
-                        </div>
-                        <a href="{{ url_for('logout') }}" class="inline-flex items-center px-3  py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <a href="{{ url_for('profile') }}" class="text-right hidden md:block group hover:opacity-85 transition-opacity">
+                            <div class="text-xs font-bold text-slate-900 group-hover:text-slate-700 uppercase tracking-wide">{{ current_user.full_name or current_user.email }}</div>
+                            <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{{ current_user.role }}</div>
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="inline-flex items-center px-3 py-1.5 border border-slate-300 text-[10px] font-bold uppercase rounded-none text-slate-700 bg-white hover:bg-slate-50 focus:outline-none">
                             Log out
                         </a>
                     </div>
                     {% else %}
                     <div class="space-x-4">
-                        <a href="{{ url_for('login') }}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Sign in</a>
-                        <a href="{{ url_for('signup') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Sign up</a>
+                        <a href="{{ url_for('login') }}" class="text-slate-500 hover:text-slate-900 text-xs font-bold uppercase tracking-wider">Sign in</a>
+                        <a href="{{ url_for('signup') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-xs font-bold uppercase rounded-none text-white bg-slate-950 hover:bg-slate-800 transition-colors">Sign up</a>
                     </div>
                     {% endif %}
                 </div>
