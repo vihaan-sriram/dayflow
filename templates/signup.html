@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Dayflow HRMS{% endblock %}
+
+{% block content %}
+<div class="min-h-full flex flex-col justify-center py-6 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+            Or
+            <a href="{{ url_for('login') }}" class="font-medium text-indigo-600 hover:text-indigo-500">
+                sign in to your existing account
+            </a>
+        </p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md" x-data="signupForm()">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+            <form class="space-y-6" action="{{ url_for('signup') }}" method="POST" @submit="validateForm($event)">
+                
+                <!-- Employee ID -->
+                <div>
+                    <label for="employee_id" class="block text-sm font-medium text-gray-700">
+                        Employee ID
+                    </label>
+                    <div class="mt-1">
+                        <input id="employee_id" name="employee_id" type="text" required placeholder="e.g. EMP001"
+                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <!-- Email Address -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">
+                        Email address
+                    </label>
+                    <div class="mt-1">
+                        <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@company.com"
+                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <!-- Role Selection -->
+                <div>
+                    <label for="role" class="block text-sm font-medium text-gray-700">
+                        Role
+                    </label>
+                    <div class="mt-1">
+                        <select id="role" name="role" required
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white">
+                            <option value="Employee">Employee (Regular access)</option>
+                            <option value="HR">HR / Admin (Management access)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <div class="mt-1 relative">
+                        <input id="password" name="password" type="password" required x-model="password" @input="checkPassword()"
+                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <!-- Password Rules Visual Checklist -->
+                    <div class="mt-2 text-xs space-y-1 bg-gray-50 p-3 rounded-md border border-gray-100">
+                        <p class="font-semibold text-gray-600 mb-1">Password Strength Requirements:</p>
+                        <div class="flex items-center" :class="rules.length ? 'text-green-600' : 'text-gray-400'">
+                            <span class="mr-1.5" x-text="rules.length ? '✓' : '○'"></span>
+                            At least 8 characters
+                        </div>
+                        <div class="flex items-center" :class="rules.mixed ? 'text-green-600' : 'text-gray-400'">
+                            <span class="mr-1.5" x-text="rules.mixed ? '✓' : '○'"></span>
+                            Uppercase & lowercase letters
+                        </div>
+                        <div class="flex items-center" :class="rules.number ? 'text-green-600' : 'text-gray-400'">
+                            <span class="mr-1.5" x-text="rules.number ? '✓' : '○'"></span>
+                            At least one number
+                        </div>
+                        <div class="flex items-center" :class="rules.special ? 'text-green-600' : 'text-gray-400'">
+                            <span class="mr-1.5" x-text="rules.special ? '✓' : '○'"></span>
+                            At least one special character (!@#$%^&*)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-gray-700">
+                        Confirm Password
+                    </label>
+                    <div class="mt-1">
+                        <input id="confirm_password" name="confirm_password" type="password" required x-model="confirmPassword"
+                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <p class="mt-1 text-xs text-red-600" x-show="confirmPassword && password !== confirmPassword" x-cloak>
+                        Passwords do not match.
+                    </p>
+                </div>
+
+                <div>
+                    <button type="submit" :disabled="!isPasswordSecure() || password !== confirmPassword"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Register Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function signupForm() {
+    return {
+        password: '',
+        confirmPassword: '',
+        rules: {
+            length: false,
+            mixed: false,
+            number: false,
+            special: false
+        },
+        checkPassword() {
+            const p = this.password;
+            this.rules.length = p.length >= 8;
+            this.rules.mixed = /[a-z]/.test(p) && /[A-Z]/.test(p);
+            this.rules.number = /[0-9]/.test(p);
+            this.rules.special = /[^A-Za-z0-9]/.test(p);
+        },
+        isPasswordSecure() {
+            return this.rules.length && this.rules.mixed && this.rules.number && this.rules.special;
+        },
+        validateForm(e) {
+            if (!this.isPasswordSecure()) {
+                e.preventDefault();
+                alert('Please ensure your password meets all strength criteria.');
+            } else if (this.password !== this.confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match.');
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
